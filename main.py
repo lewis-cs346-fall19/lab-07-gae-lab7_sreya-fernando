@@ -36,7 +36,7 @@ def formfornewusername(self):
    <title>USER NAME SUBMISSION</title>
  </head>
  <body>
-   <form method="put" action="https://ferandre14lab7.appspot.com/">
+   <form method="get" action="https://ferandre14lab7.appspot.com/">
           <input type="text" name="username" Submit your Username:><br/>
           <input type="submit">
         </form>
@@ -44,39 +44,36 @@ def formfornewusername(self):
 </html>""")
     # username=self.request.get("username")
      #return username
-
-
 def updatedatabase(newusername,cookieResult):
     conn = MySQLdb.connect(unix_socket=password.SQL_HOST, user=password.SQL_USER, passwd=password.SQL_PASSWD, db="lab7")
     cursor = conn.cursor()
-
     cursor.execute("UPDATE sessions SET username = %s WHERE id = %s;", (newusername,cookieResult))
     cursor.close()
     conn.commit()
     conn.close()
 
-def checkfornulluser(cookieResult):
+def checkfornulluser(cookieResult,self):
+    usernameform = self.request.GET.get('username')
     conn = MySQLdb.connect(unix_socket=password.SQL_HOST, user=password.SQL_USER, passwd=password.SQL_PASSWD, db="lab7")
     cursor = conn.cursor()
-    cursor.execute("SELECT username FROM sessions WHERE username is not NULL AND id=%s",(cookieResult,))
+    cursor.execute("SELECT username FROM sessions WHERE id=%s and username is not NULL",(cookieResult,))
     user = cursor.fetchall()
-    if len(user) != 0:
-        username = user[0][0]
+    if user== None:
+        cursor.execute("INSERT INTO sessions (id, user) VALUES (%s,%s)",(cookieResult,usernameform))
+        return None
     else:
-        username = None
+        self.response.write("will implemnt increment logic here")
     cursor.close()
     conn.commit()
     conn.close()
-    return username
+    return user
 
-def verifyform():
+"""def verifyform():
     form = cgi.FieldStorage()
     if "name" in form:
         return form.getvalue("name")
     else:
-        return None
-
-
+        return None"""
 class MainPage(webapp2.RequestHandler):
     def get(self):
         self.response.headers["Content-Type"] = "text/html"
@@ -92,9 +89,22 @@ class MainPage(webapp2.RequestHandler):
             cookieResult=randomid
             self.response.set_cookie('lastvisit', 'test', max_age=30, path='/')
             formfornewusername(self)
+        #when user loads the website and the user field of the session is null
+        elif cookieResult!= None and checkfornulluser(cookieResult,self)== None:
+            self.response.write("""<html>
+            <head>
+                <title>Cookie But no Username</title>
+           </head>
+            <body>
+            <p> You have a cookie assicociated with this session but no user name!
+            Please enter your user name below!</p>
+            <form method="put" action="https://ferandre14lab7.appspot.com/">
+                  <input type="text" name="username" Submit your Username:><br/>
+                  <input type="submit">
+                </form>
+                </body>
+            </html>""")
 
-        if checkfornulluser(cookieResult)== None:
-            formfornewusername(self)
 
         #username = verify_user(cookieResult)
         #checkform = verifyform()
