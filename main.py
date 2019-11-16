@@ -8,7 +8,7 @@ import random
 import cgi
 import cgitb
 
-def recordsession(randomid):
+def recordsessions(randomid):
     conn = MySQLdb.connect(unix_socket=password.SQL_HOST, user=password.SQL_USER, passwd=password.SQL_PASSWD, db="lab7")
     cursor = conn.cursor()
     cursor.execute("INSERT INTO sessions (id) VALUES (%s);", (randomid,))
@@ -51,7 +51,6 @@ def updatedatabase(newusername,cookieResult):
     cursor.close()
     conn.commit()
     conn.close()
-
 def checkfornulluser(cookieResult,self):
     usernameform = self.request.GET.get('username')
     conn = MySQLdb.connect(unix_socket=password.SQL_HOST, user=password.SQL_USER, passwd=password.SQL_PASSWD, db="lab7")
@@ -59,9 +58,10 @@ def checkfornulluser(cookieResult,self):
     cursor.execute("SELECT username FROM sessions WHERE id=%s and username is not NULL",(cookieResult,))
     user = cursor.fetchall()
     if user== None:
-        cursor.execute("INSERT INTO sessions (id, user) VALUES (%s,%s)",(cookieResult,usernameform))
+        #cursor.execute("INSERT INTO sessions (id, username) VALUES (%s,%s)",(cookieResult,usernameform))
         return None
     else:
+        cursor.execute("UPDATE sessions SET username=(%s) WHERE id=(%s)",(usernameform,cookieResult))
         self.response.write("will implemnt increment logic here")
     cursor.close()
     conn.commit()
@@ -80,23 +80,22 @@ class MainPage(webapp2.RequestHandler):
         cookieResult = self.request.cookies.get("firstCookie")
         #Cookie doesnt exist
         if cookieResult == None:
-            #Generates random session id
+            #Generates random sessions id
             randomid = "%032x" % random.getrandbits(128)
             #set_cookie
             self.response.set_cookie("firstCookie",randomid, max_age=300)
             #inserts in database
-            recordsession(randomid)
+            recordsessions(randomid)
             cookieResult=randomid
-            self.response.set_cookie('lastvisit', 'test', max_age=30, path='/')
             formfornewusername(self)
-        #when user loads the website and the user field of the session is null
+        #when user loads the website and the user field of the sessions is null
         elif cookieResult!= None and checkfornulluser(cookieResult,self)== None:
             self.response.write("""<html>
             <head>
                 <title>Cookie But no Username</title>
            </head>
             <body>
-            <p> You have a cookie assicociated with this session but no user name!
+            <p> You have a cookie assicociated with this sessions but no user name!
             Please enter your user name below!</p>
             <form method="put" action="https://ferandre14lab7.appspot.com/">
                   <input type="text" name="username" Submit your Username:><br/>
@@ -122,5 +121,4 @@ class MainPage(webapp2.RequestHandler):
                     #self.response.write('<br>Check <a href="https:....somethingsomehingappspot.com/">value</a>')
 app = webapp2.WSGIApplication([
     ("/", MainPage),
-    #("/add_user", Add_User)
 ], debug=True)
