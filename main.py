@@ -1,4 +1,4 @@
-# coding=utf-8
+#coding=utf-8
 import cgi
 import webapp2
 import MySQLdb
@@ -7,6 +7,8 @@ import json
 import random
 import cgi
 import cgitb
+
+#FINALEDITSPUSHTOGIT!
 
 def recordsessions(randomid):
     conn = MySQLdb.connect(unix_socket=password.SQL_HOST, user=password.SQL_USER, passwd=password.SQL_PASSWD, db="lab7")
@@ -30,14 +32,6 @@ Please enter your user name!</p>
         </form>
  </body>
 </html>""")
-
-def updatedatabase(newusername,cookieResult):
-    conn = MySQLdb.connect(unix_socket=password.SQL_HOST, user=password.SQL_USER, passwd=password.SQL_PASSWD, db="lab7")
-    cursor = conn.cursor()
-    cursor.execute("UPDATE sessions SET username = %s WHERE id = %s;", (newusername,cookieResult))
-    cursor.close()
-    conn.commit()
-    conn.close()
 
 def checkfornulluser(cookieResult,self):
     usernameform = self.request.GET.get('username') #Get username from form
