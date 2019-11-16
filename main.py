@@ -40,10 +40,10 @@ def updatedatabase(newusername,cookieResult):
     conn.close()
 
 def checkfornulluser(cookieResult,self):
-    usernameform = self.request.GET.get('username')
+    usernameform = self.request.GET.get('username') #Get username from form
     conn = MySQLdb.connect(unix_socket=password.SQL_HOST, user=password.SQL_USER, passwd=password.SQL_PASSWD, db="lab7")
     cursor = conn.cursor()
-    cursor.execute("SELECT username FROM sessions WHERE id=%s and username is not NULL",(cookieResult,))
+    cursor.execute("SELECT username FROM sessions WHERE id=(%s) and username is not NULL",(cookieResult,))
     user = cursor.fetchall()
     #if len(user)== 0:
         #cursor.execute("INSERT INTO sessions (id, username) VALUES (%s,%s)",(cookieResult,usernameform))
@@ -52,15 +52,33 @@ def checkfornulluser(cookieResult,self):
         #cursor.execute("UPDATE sessions SET username=(%s) WHERE id=(%s)",(usernameform,cookieResult))
     #user = cursor.fetchall()
     if len(user) != 0:
+        #cursor.execute("UPDATE sessions SET username=(%s) WHERE id=(%s)",(usernameform,cookieResult))
         user = user[0][0]
-        cursor.execute("UPDATE sessions SET username=(%s) WHERE id=(%s)",(usernameform,cookieResult))
-    else:
+    if len(user) == 0:
+        #cursor.execute("INSERT INTO sessions (id, username) VALUES (%s,%s)",(cookieResult,usernameform))
+        #recordsessions(cookieResul
+        #cursor.execute("UPDATE sessions SET username=(%s) WHERE id=(%s)",(usernameform,cookieResult))
         user = None
         #self.response.write("will implement increment logic here")
     cursor.close()
     conn.commit()
     conn.close()
     return user
+
+def cookietherebutusernull(self):
+    self.response.write("""<html>
+    <head>
+        <title>Cookie But no Username</title>
+    </head>
+    <body>
+    <p> You have a Cookie assicociated with this sessions but no user name!
+    Please enter your user name below!</p>
+    <form method="get" action="https://ferandre14lab7.appspot.com/">
+          <input type="text" name="username" Submit your Username:><br/>
+          <input type="submit">
+        </form>
+        </body>
+    </html>""")
 #makes sure the current user is referenced in the increments table using their cookie
 def ensureIncrementData(cookieResult):
     conn = MySQLdb.connect(unix_socket=password.SQL_HOST, user=password.SQL_USER, passwd=password.SQL_PASSWD, db="lab7")
@@ -109,19 +127,18 @@ class MainPage(webapp2.RequestHandler):
             formfornewusername(self)
         #when user loads the website and the user field of the sessions is null
         elif cookieResult!= None and checkfornulluser(cookieResult,self)== None:
-            self.response.write("""<html>
-            <head>
-                <title>Cookie But no Username</title>
-           </head>
-            <body>
-            <p> You have a cookie assicociated with this sessions but no user name!
-            Please enter your user name below!</p>
-            <form method="put" action="https://ferandre14lab7.appspot.com/">
-                  <input type="text" name="username" Submit your Username:><br/>
-                  <input type="submit">
-                </form>
-                </body>
-            </html>""")
+            cookietherebutusernull(self):
+            usernameform = self.request.GET.get('username') #Get username from form
+            conn = MySQLdb.connect(unix_socket=password.SQL_HOST, user=password.SQL_USER, passwd=password.SQL_PASSWD, db="lab7")
+            cursor = conn.cursor()
+            cursor.execute("SELECT username FROM sessions WHERE id=(%s) and username is not NULL",(cookieResult,))
+            user = cursor.fetchall()
+            cursor.execute("UPDATE sessions SET username=(%s) WHERE id=(%s)",(usernameform,cookieResult))
+            cursor.close()
+            conn.commit()
+            conn.close()
+
+
         elif cookieResult != None and checkfornulluser(cookieResult, self) != None:
             #ensuring theres a cookie in the increments table
             ensureIncrementData(cookieResult)
@@ -139,21 +156,9 @@ class MainPage(webapp2.RequestHandler):
             <button type="submit">Increment Value</button>
             <input type="hidden" name="newInc", value="{1:d}"></form></body></html>'''.format(incVal, incVal+1))
 
-
-        #username = verify_user(cookieResult)
-        #checkform = verifyform()
-        #if username == None and checkform != None:
-            #updatedatabase(checkform,cookieResult)
         else:
-            print("you are dumb")
-                #check user values
-                #increment_values(self)
+            print("ALL Cases are covered, ELSE Statement here for contingency")
 
-                #Now Present form
-                 #1) Take in user name
-                 #2) When username is present in form update them with cookie
-                #3): output the update cookie + pass username as cgo variable:
-                    #self.response.write('<br>Check <a href="https:....somethingsomehingappspot.com/">value</a>')
 app = webapp2.WSGIApplication([
     ("/", MainPage),
 ], debug=True)
